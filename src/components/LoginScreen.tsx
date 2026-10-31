@@ -25,6 +25,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, initia
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    // Detectar errores devueltos por Supabase OAuth en la URL (?error=... o #error=...)
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const urlError = searchParams.get('error_description') || hashParams.get('error_description');
+
+      if (urlError) {
+        const decodedError = decodeURIComponent(urlError.replace(/\+/g, ' '));
+        setErrorMessage(`Error de autenticación con Google: ${decodedError}`);
+        // Limpiar parámetros de error de la URL sin recargar
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch {
+      // Ignorar
+    }
+  }, []);
+
+  useEffect(() => {
     if (!isAuthenticated) return;
     if (isGuest) return;
     if (profile?.profile_completed && profile?.university && profile?.career) {
